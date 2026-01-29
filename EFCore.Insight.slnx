@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/EFCore.Insight/EFCore.Insight.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/EFCore.Insight.Tests/EFCore.Insight.Tests.csproj" />
+  </Folder>
+</Solution>
