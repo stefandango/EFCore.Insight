@@ -104,6 +104,69 @@ app.MapGet("/stats", async (SampleDbContext db) => new
         .ToListAsync()
 });
 
+// ============================================================================
+// N+1 DEMO ENDPOINTS
+// These endpoints demonstrate N+1 query patterns for EFCore.Insight testing
+// ============================================================================
+
+// BAD: N+1 pattern - loads orders, then issues separate query for each order's items
+app.MapGet("/demo/n1-bad", async (SampleDbContext db) =>
+{
+    var orders = await db.Orders.ToListAsync();
+    var result = new List<object>();
+
+    foreach (var order in orders)
+    {
+        // N+1: This issues a separate query for each order!
+        var items = await db.OrderItems
+            .Where(i => i.OrderId == order.Id)
+            .ToListAsync();
+
+        result.Add(new
+        {
+            order.Id,
+            order.CustomerName,
+            ItemCount = items.Count
+        });
+    }
+
+    return result;
+});
+
+// GOOD: Single query with Include - no N+1
+app.MapGet("/demo/n1-good", async (SampleDbContext db) =>
+{
+    var orders = await db.Orders
+        .Include(o => o.Items)
+        .ToListAsync();
+
+    return orders.Select(o => new
+    {
+        o.Id,
+        o.CustomerName,
+        ItemCount = o.Items.Count
+    });
+});
+
+// BAD: N+1 when looking up products by ID in a loop
+app.MapGet("/demo/n1-products", async (SampleDbContext db) =>
+{
+    var productIds = await db.Products.Select(p => p.Id).ToListAsync();
+    var result = new List<object>();
+
+    foreach (var id in productIds)
+    {
+        // N+1: Separate query for each product!
+        var product = await db.Products.FindAsync(id);
+        if (product != null)
+        {
+            result.Add(new { product.Name, product.Price });
+        }
+    }
+
+    return result;
+});
+
 app.Run();
 
 // Seed data helper
@@ -124,14 +187,33 @@ static void SeedData(SampleDbContext db)
     };
     db.Products.AddRange(products);
 
-    var order = new Order
+    // Create multiple orders to make N+1 patterns more visible
+    var customers = new[] { "John Doe", "Jane Smith", "Bob Wilson", "Alice Brown", "Charlie Davis" };
+    var random = new Random(42);
+
+    for (var i = 0; i < customers.Length; i++)
     {
-        CustomerName = "John Doe",
-        OrderDate = DateTime.UtcNow.AddDays(-1)
-    };
-    order.Items.Add(new OrderItem { Product = products[0], Quantity = 1, UnitPrice = products[0].Price });
-    order.Items.Add(new OrderItem { Product = products[1], Quantity = 2, UnitPrice = products[1].Price });
-    db.Orders.Add(order);
+        var order = new Order
+        {
+            CustomerName = customers[i],
+            OrderDate = DateTime.UtcNow.AddDays(-i)
+        };
+
+        // Add 1-3 random items per order
+        var itemCount = random.Next(1, 4);
+        for (var j = 0; j < itemCount; j++)
+        {
+            var product = products[random.Next(products.Length)];
+            order.Items.Add(new OrderItem
+            {
+                Product = product,
+                Quantity = random.Next(1, 5),
+                UnitPrice = product.Price
+            });
+        }
+
+        db.Orders.Add(order);
+    }
 
     db.SaveChanges();
 }
