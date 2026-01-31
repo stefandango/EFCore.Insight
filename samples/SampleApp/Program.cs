@@ -167,6 +167,51 @@ app.MapGet("/demo/n1-products", async (SampleDbContext db) =>
     return result;
 });
 
+// SPLIT QUERY: Uses AsSplitQuery() to execute multiple SELECTs instead of JOINs
+app.MapGet("/demo/split", async (SampleDbContext db) =>
+{
+    // AsSplitQuery splits this into separate queries for Orders and OrderItems
+    var orders = await db.Orders
+        .Include(o => o.Items)
+        .ThenInclude(i => i.Product)
+        .AsSplitQuery()
+        .ToListAsync();
+
+    return orders.Select(o => new
+    {
+        o.Id,
+        o.CustomerName,
+        Items = o.Items.Select(i => new
+        {
+            i.Product.Name,
+            i.Quantity,
+            i.UnitPrice
+        })
+    });
+});
+
+// SINGLE QUERY: Same query without AsSplitQuery (uses JOINs)
+app.MapGet("/demo/single", async (SampleDbContext db) =>
+{
+    // This uses JOINs - single query but may have "cartesian explosion"
+    var orders = await db.Orders
+        .Include(o => o.Items)
+        .ThenInclude(i => i.Product)
+        .ToListAsync();
+
+    return orders.Select(o => new
+    {
+        o.Id,
+        o.CustomerName,
+        Items = o.Items.Select(i => new
+        {
+            i.Product.Name,
+            i.Quantity,
+            i.UnitPrice
+        })
+    });
+});
+
 app.Run();
 
 // Seed data helper
