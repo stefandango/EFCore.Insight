@@ -212,6 +212,71 @@ app.MapGet("/demo/single", async (SampleDbContext db) =>
     });
 });
 
+// ============================================================================
+// CARTESIAN EXPLOSION DEMO
+// This demonstrates the cartesian explosion problem with multiple Includes
+// ============================================================================
+
+// BAD: Cartesian Explosion - multiple collection includes without AsSplitQuery
+// With 10 orders, each having 5 items = 50+ rows returned from a single query
+// If we had another collection (like Payments), it would multiply further!
+app.MapGet("/demo/cartesian", async (SampleDbContext db) =>
+{
+    // This query loads all orders with their items
+    // Even though we have 10 orders with ~5 items each, the JOIN returns ~50 rows
+    // This can be detected as a potential cartesian explosion
+    var orders = await db.Orders
+        .Include(o => o.Items)
+        .ThenInclude(i => i.Product)
+        .ToListAsync();
+
+    return new
+    {
+        OrderCount = orders.Count,
+        TotalItems = orders.Sum(o => o.Items.Count),
+        Message = "Check the dashboard - you may see a Cartesian Explosion warning",
+        Orders = orders.Select(o => new
+        {
+            o.Id,
+            o.CustomerName,
+            Items = o.Items.Select(i => new
+            {
+                i.Product.Name,
+                i.Quantity
+            })
+        })
+    };
+});
+
+// GOOD: Same query with AsSplitQuery - avoids cartesian explosion
+app.MapGet("/demo/cartesian-fixed", async (SampleDbContext db) =>
+{
+    // Using AsSplitQuery() splits this into separate queries
+    // This avoids row multiplication from JOINs
+    var orders = await db.Orders
+        .Include(o => o.Items)
+        .ThenInclude(i => i.Product)
+        .AsSplitQuery()
+        .ToListAsync();
+
+    return new
+    {
+        OrderCount = orders.Count,
+        TotalItems = orders.Sum(o => o.Items.Count),
+        Message = "Using AsSplitQuery - check dashboard to see split queries instead of joins",
+        Orders = orders.Select(o => new
+        {
+            o.Id,
+            o.CustomerName,
+            Items = o.Items.Select(i => new
+            {
+                i.Product.Name,
+                i.Quantity
+            })
+        })
+    };
+});
+
 app.Run();
 
 // Seed data helper
@@ -232,8 +297,9 @@ static void SeedData(SampleDbContext db)
     };
     db.Products.AddRange(products);
 
-    // Create multiple orders to make N+1 patterns more visible
-    var customers = new[] { "John Doe", "Jane Smith", "Bob Wilson", "Alice Brown", "Charlie Davis" };
+    // Create multiple orders to make N+1 and cartesian patterns more visible
+    var customers = new[] { "John Doe", "Jane Smith", "Bob Wilson", "Alice Brown", "Charlie Davis",
+                            "Diana Prince", "Eve Adams", "Frank Miller", "Grace Lee", "Henry Ford" };
     var random = new Random(42);
 
     for (var i = 0; i < customers.Length; i++)
@@ -244,8 +310,8 @@ static void SeedData(SampleDbContext db)
             OrderDate = DateTime.UtcNow.AddDays(-i)
         };
 
-        // Add 1-3 random items per order
-        var itemCount = random.Next(1, 4);
+        // Add 3-6 random items per order (more items to demonstrate cartesian explosion)
+        var itemCount = random.Next(3, 7);
         for (var j = 0; j < itemCount; j++)
         {
             var product = products[random.Next(products.Length)];
