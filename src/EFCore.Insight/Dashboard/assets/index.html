@@ -3,31 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EFCore.Insight - Query Dashboard</title>
+    <title>EFCore.Insight</title>
     <style>
         :root {
             --bg-primary: #0d1117;
             --bg-secondary: #161b22;
             --bg-tertiary: #21262d;
-            --text-primary: #c9d1d9;
+            --text-primary: #e6edf3;
             --text-secondary: #8b949e;
             --text-muted: #6e7681;
             --border-color: #30363d;
             --accent: #58a6ff;
-            --accent-hover: #79b8ff;
             --success: #3fb950;
             --error: #f85149;
             --warning: #d29922;
+            --slow: #f85149;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
             line-height: 1.5;
@@ -36,200 +32,256 @@
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 24px;
         }
 
+        /* Header */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 16px 0;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
 
-        header h1 {
-            font-size: 24px;
+        .logo {
+            font-size: 20px;
             font-weight: 600;
+            color: var(--text-primary);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
-        header h1 span {
-            color: var(--accent);
-        }
+        .logo span { color: var(--accent); }
 
-        .controls {
+        .header-controls {
             display: flex;
-            gap: 12px;
             align-items: center;
+            gap: 16px;
         }
 
-        button {
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .live-dot.paused { background: var(--text-muted); animation: none; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .btn {
             background: var(--bg-tertiary);
             color: var(--text-primary);
             border: 1px solid var(--border-color);
-            padding: 8px 16px;
+            padding: 6px 12px;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
-            transition: background 0.15s;
+            font-size: 13px;
         }
 
-        button:hover {
-            background: var(--border-color);
-        }
+        .btn:hover { background: var(--border-color); }
+        .btn-danger { color: var(--error); }
+        .btn-primary { background: var(--accent); border-color: var(--accent); }
+        .btn-primary:hover { background: #4a9eff; }
 
-        button.primary {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: #fff;
-        }
-
-        button.primary:hover {
-            background: var(--accent-hover);
-        }
-
-        button.danger {
-            background: var(--error);
-            border-color: var(--error);
-            color: #fff;
-        }
-
-        button.danger:hover {
-            background: #da3633;
-        }
-
-        .stats-bar {
+        /* Stats */
+        .stats {
             display: flex;
-            gap: 20px;
-            padding: 16px;
-            background: var(--bg-secondary);
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border-color);
+            gap: 32px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
         }
 
-        .stat {
+        .stat-item {
             display: flex;
             flex-direction: column;
         }
 
+        .stat-value {
+            font-size: 28px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .stat-value.has-issues { color: var(--warning); }
+        .stat-value.has-savings { color: var(--success); }
+
         .stat-label {
             font-size: 12px;
-            color: var(--text-secondary);
+            color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        .stat-value {
-            font-size: 24px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .stat-value.error {
-            color: var(--error);
-        }
-
-        .filters {
+        /* Main Navigation Tabs */
+        .nav-tabs {
             display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        input[type="text"], input[type="number"] {
+            gap: 4px;
+            margin-bottom: 24px;
             background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        input::placeholder {
-            color: var(--text-muted);
-        }
-
-        .query-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .query-item {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
+            padding: 4px;
             border-radius: 8px;
-            overflow: hidden;
-            transition: border-color 0.15s;
+            width: fit-content;
         }
 
-        .query-item:hover {
-            border-color: var(--accent);
-        }
-
-        .query-item.error {
-            border-left: 3px solid var(--error);
-        }
-
-        .query-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 16px;
+        .nav-tab {
+            padding: 10px 20px;
+            border-radius: 6px;
             cursor: pointer;
-            gap: 16px;
-        }
-
-        .query-meta {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            flex-shrink: 0;
-        }
-
-        .query-duration {
-            font-weight: 600;
             font-size: 14px;
-            padding: 4px 8px;
-            border-radius: 4px;
-            background: var(--bg-tertiary);
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.15s;
         }
 
-        .query-duration.slow {
+        .nav-tab:hover { color: var(--text-primary); }
+
+        .nav-tab.active {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            background: var(--bg-secondary);
+            padding: 4px;
+            border-radius: 8px;
+            width: fit-content;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-secondary);
+            transition: all 0.15s;
+        }
+
+        .tab:hover { color: var(--text-primary); }
+
+        .tab.active {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .tab .count {
+            margin-left: 6px;
+            background: var(--bg-primary);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        .tab.active .count { background: var(--bg-secondary); }
+
+        .tab.has-issues .count {
             background: var(--warning);
             color: #000;
         }
 
-        .query-duration.very-slow {
-            background: var(--error);
-            color: #fff;
+        .tabs-row {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 16px;
         }
 
-        .query-time {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .query-path {
-            font-size: 12px;
+        .group-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
             color: var(--text-secondary);
-            background: var(--bg-tertiary);
-            padding: 2px 8px;
-            border-radius: 4px;
+            cursor: pointer;
         }
 
-        .query-sql-preview {
-            flex: 1;
-            font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+        .group-toggle input {
+            cursor: pointer;
+        }
+
+        .group-toggle:hover {
+            color: var(--text-primary);
+        }
+
+        /* Search */
+        .search-bar {
+            margin-bottom: 16px;
+        }
+
+        .search-input {
+            width: 100%;
+            max-width: 400px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .search-input::placeholder { color: var(--text-muted); }
+
+        /* Content panels */
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        /* Query List */
+        .query-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .query-row {
+            display: grid;
+            grid-template-columns: 80px 1fr auto;
+            gap: 16px;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        .query-row:hover { background: var(--bg-tertiary); }
+
+        .query-row.expanded {
+            background: var(--bg-tertiary);
+            border-radius: 6px 6px 0 0;
+        }
+
+        /* Duration - the key metric */
+        .duration {
+            font-family: 'SF Mono', monospace;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .duration.fast { color: var(--text-muted); }
+        .duration.medium { color: var(--text-secondary); }
+        .duration.slow { color: var(--warning); }
+        .duration.very-slow { color: var(--error); }
+
+        /* SQL Preview */
+        .sql-preview {
+            font-family: 'SF Mono', monospace;
             font-size: 13px;
             color: var(--text-secondary);
             white-space: nowrap;
@@ -237,79 +289,204 @@
             text-overflow: ellipsis;
         }
 
+        .call-site {
+            font-size: 12px;
+            color: var(--accent);
+            white-space: nowrap;
+        }
+
+        .call-site:hover {
+            text-decoration: underline;
+        }
+
+        /* Tags */
+        .tags {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .tag {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .tag-slow { background: var(--error); color: #fff; }
+        .tag-n1 { background: var(--warning); color: #000; }
+        .tag-split { background: var(--accent); color: #fff; }
+        .tag-error { background: var(--error); color: #fff; }
+        .tag-hint { background: var(--bg-tertiary); cursor: help; }
+        .tag-high { background: var(--error); color: #fff; }
+        .tag-medium { background: var(--warning); color: #000; }
+        .tag-low { background: var(--accent); color: #fff; }
+
+        .time {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Expanded Details */
         .query-details {
             display: none;
             padding: 16px;
-            border-top: 1px solid var(--border-color);
             background: var(--bg-tertiary);
+            border-radius: 0 0 6px 6px;
+            margin-bottom: 2px;
         }
 
-        .query-item.expanded .query-details {
-            display: block;
-        }
+        .query-row.expanded + .query-details { display: block; }
 
-        .query-sql {
-            font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+        .sql-full {
+            font-family: 'SF Mono', monospace;
             font-size: 13px;
             line-height: 1.6;
-            white-space: pre-wrap;
-            word-break: break-all;
             background: var(--bg-primary);
             padding: 16px;
             border-radius: 6px;
+            white-space: pre-wrap;
+            word-break: break-word;
             margin-bottom: 12px;
-            overflow-x: auto;
         }
 
-        .query-params {
+        .sql-keyword { color: var(--accent); font-weight: 600; }
+
+        .detail-section {
             margin-top: 12px;
         }
 
-        .query-params h4 {
+        .detail-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .detail-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .param-chip {
+            font-family: monospace;
+            font-size: 12px;
+            background: var(--bg-secondary);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .param-name { color: var(--accent); }
+        .param-value { color: var(--success); }
+
+        .stack-trace {
+            font-family: 'SF Mono', monospace;
+            font-size: 12px;
+            line-height: 1.8;
+            background: var(--bg-primary);
+            padding: 12px;
+            border-radius: 6px;
+            color: var(--text-secondary);
+        }
+
+        .stack-frame {
+            padding: 2px 0;
+        }
+
+        .stack-frame:first-child {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        /* Suggestions */
+        .suggestions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .suggestion {
+            background: var(--bg-primary);
+            border-radius: 6px;
+            padding: 12px;
+            border-left: 3px solid var(--warning);
+        }
+
+        .suggestion.high {
+            border-left-color: var(--error);
+            background: rgba(248, 81, 73, 0.1);
+        }
+
+        .suggestion.medium {
+            border-left-color: var(--warning);
+        }
+
+        .suggestion.low, .suggestion.info {
+            border-left-color: var(--accent);
+        }
+
+        .suggestion-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .suggestion-icon {
+            font-size: 14px;
+        }
+
+        .suggestion.high .suggestion-icon { color: var(--error); }
+        .suggestion.medium .suggestion-icon { color: var(--warning); }
+        .suggestion.low .suggestion-icon, .suggestion.info .suggestion-icon { color: var(--accent); }
+
+        .suggestion-title {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .suggestion-message {
             font-size: 12px;
             color: var(--text-secondary);
             margin-bottom: 8px;
-            text-transform: uppercase;
         }
 
-        .params-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .param {
-            background: var(--bg-secondary);
-            padding: 4px 10px;
+        .suggestion-fix {
+            font-family: 'SF Mono', monospace;
+            font-size: 11px;
+            background: var(--bg-tertiary);
+            padding: 8px;
             border-radius: 4px;
-            font-family: monospace;
-            font-size: 12px;
-        }
-
-        .param-name {
-            color: var(--accent);
-        }
-
-        .param-value {
             color: var(--success);
+            white-space: pre-wrap;
+            word-break: break-all;
         }
+
+        .suggestion-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .suggestion-badge.high { background: var(--error); color: #fff; }
+        .suggestion-badge.medium { background: var(--warning); color: #000; }
+        .suggestion-badge.low { background: var(--accent); color: #fff; }
+        .suggestion-badge.info { background: var(--text-muted); color: #fff; }
 
         .copy-btn {
+            margin-top: 12px;
             font-size: 12px;
-            padding: 4px 12px;
-            margin-top: 12px;
+            padding: 6px 12px;
         }
 
-        .error-message {
-            color: var(--error);
-            background: rgba(248, 81, 73, 0.1);
-            padding: 12px;
-            border-radius: 6px;
-            margin-top: 12px;
-            font-family: monospace;
-            font-size: 13px;
-        }
-
+        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -317,282 +494,1049 @@
         }
 
         .empty-state h3 {
-            font-size: 18px;
+            color: var(--text-secondary);
             margin-bottom: 8px;
-            color: var(--text-secondary);
         }
 
-        .toggle-container {
+        /* Issue Indicator on row */
+        .query-row.has-issue {
+            border-left: 3px solid var(--warning);
+        }
+
+        .query-row.has-slow {
+            border-left: 3px solid var(--error);
+        }
+
+        /* Split Query Groups */
+        .split-group-header {
             display: flex;
             align-items: center;
-            gap: 8px;
-        }
-
-        .toggle {
-            position: relative;
-            width: 44px;
-            height: 24px;
+            gap: 12px;
+            padding: 8px 16px;
             background: var(--bg-tertiary);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .toggle.active {
-            background: var(--success);
-        }
-
-        .toggle::after {
-            content: '';
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 20px;
-            height: 20px;
-            background: #fff;
-            border-radius: 50%;
-            transition: transform 0.2s;
-        }
-
-        .toggle.active::after {
-            transform: translateX(20px);
-        }
-
-        .toggle-label {
-            font-size: 14px;
+            border-left: 3px solid var(--accent);
+            margin-top: 16px;
+            margin-bottom: 2px;
+            border-radius: 6px 6px 0 0;
+            font-size: 13px;
             color: var(--text-secondary);
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        .split-group-header .tag-split {
+            flex-shrink: 0;
         }
 
-        .live-indicator {
-            display: flex;
-            align-items: center;
-            gap: 6px;
+        .split-group-total {
+            margin-left: auto;
+            font-family: 'SF Mono', monospace;
             font-size: 12px;
             color: var(--text-muted);
         }
 
-        .live-indicator.active .dot {
-            background: var(--success);
-            animation: pulse 1.5s infinite;
+        .split-group-header + .query-row {
+            border-radius: 0;
+            border-left: 3px solid var(--accent);
         }
 
-        .live-indicator .dot {
+        .split-group-header + .query-row + .query-details + .query-row {
+            border-left: 3px solid var(--accent);
+        }
+
+        /* Cost Report */
+        .cost-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .cost-card {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .cost-card-value {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .cost-card-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .recommendation-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .recommendation-item {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 16px;
+            border-left: 3px solid var(--warning);
+        }
+
+        .recommendation-item.high { border-left-color: var(--error); }
+        .recommendation-item.low { border-left-color: var(--accent); }
+
+        .recommendation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .recommendation-type {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .recommendation-savings {
+            font-family: 'SF Mono', monospace;
+            font-size: 14px;
+            color: var(--success);
+        }
+
+        .recommendation-sql {
+            font-family: 'SF Mono', monospace;
+            font-size: 12px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 8px;
+        }
+
+        .recommendation-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Endpoints List */
+        .endpoint-item {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 8px;
+        }
+
+        .endpoint-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .endpoint-name {
+            font-family: 'SF Mono', monospace;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .endpoint-duration {
+            font-family: 'SF Mono', monospace;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .endpoint-bar {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .bar-segment {
+            height: 100%;
+        }
+
+        .bar-n1 { background: var(--warning); }
+        .bar-slow { background: var(--error); }
+        .bar-normal { background: var(--success); }
+
+        .endpoint-legend {
+            display: flex;
+            gap: 16px;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-muted);
+        }
+
+        .legend-dot {
             width: 8px;
             height: 8px;
-            background: var(--text-muted);
             border-radius: 50%;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px 8px;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* Plan Viewer */
+        .plan-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        .plan-loading .spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border-color);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .plan-error {
+            background: rgba(248, 81, 73, 0.1);
+            border: 1px solid var(--error);
+            border-radius: 8px;
+            padding: 16px;
+            color: var(--error);
+        }
+
+        .plan-issues {
+            margin-bottom: 20px;
+        }
+
+        .plan-issues-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-weight: 600;
+            color: var(--warning);
+        }
+
+        .plan-issue {
+            background: var(--bg-primary);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-left: 3px solid var(--warning);
+        }
+
+        .plan-issue.high {
+            border-left-color: var(--error);
+            background: rgba(248, 81, 73, 0.1);
+        }
+
+        .plan-issue.medium {
+            border-left-color: var(--warning);
+        }
+
+        .plan-issue.low {
+            border-left-color: var(--accent);
+        }
+
+        .plan-issue-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .plan-issue-title {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .plan-issue-message {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .plan-issue-fix {
+            font-family: 'SF Mono', monospace;
+            font-size: 11px;
+            background: var(--bg-tertiary);
+            padding: 8px;
+            border-radius: 4px;
+            color: var(--success);
+        }
+
+        .plan-tree-section {
+            margin-bottom: 20px;
+        }
+
+        .plan-tree-header {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .plan-tree {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'SF Mono', monospace;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+
+        .plan-node {
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .plan-node::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: var(--border-color);
+        }
+
+        .plan-node:last-child::before {
+            height: 12px;
+        }
+
+        .plan-node-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 4px 0;
+            position: relative;
+        }
+
+        .plan-node-content::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 12px;
+            width: 16px;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .plan-node-icon {
+            flex-shrink: 0;
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .plan-node-icon.table-scan {
+            background: var(--error);
+            color: #fff;
+        }
+
+        .plan-node-icon.index-scan {
+            background: var(--success);
+            color: #fff;
+        }
+
+        .plan-node-icon.index-seek {
+            background: var(--success);
+            color: #fff;
+        }
+
+        .plan-node-icon.sort {
+            background: var(--warning);
+            color: #000;
+        }
+
+        .plan-node-icon.filter {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .plan-node-icon.join {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .plan-node-icon.other {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+
+        .plan-node-op {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .plan-node-op.warning {
+            color: var(--error);
+        }
+
+        .plan-node-object {
+            color: var(--accent);
+        }
+
+        .plan-node-details {
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+
+        .plan-node-cost {
+            color: var(--text-muted);
+            font-size: 11px;
+            margin-left: auto;
+        }
+
+        .plan-node-children {
+            margin-left: 8px;
+        }
+
+        .plan-stats {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+        }
+
+        .plan-stat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .plan-stat-value {
+            font-family: 'SF Mono', monospace;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .plan-stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .plan-raw-toggle {
+            margin-top: 16px;
+        }
+
+        .plan-raw {
+            display: none;
+            margin-top: 12px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'SF Mono', monospace;
+            font-size: 11px;
+            white-space: pre-wrap;
+            color: var(--text-secondary);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .plan-raw.visible {
+            display: block;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 12c0 1.66-4.03 3-9 3s-9-1.34-9-3"></path>
-                    <path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"></path>
-                    <path d="M21 5c0 1.66-4.03 3-9 3s-9-1.34-9-3"></path>
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                    <path d="M21 5v14c0 1.66-4.03 3-9 3s-9-1.34-9-3V5"></path>
                 </svg>
                 EFCore.<span>Insight</span>
-            </h1>
-            <div class="controls">
-                <div class="live-indicator" id="liveIndicator">
-                    <span class="dot"></span>
-                    <span>Auto-refresh</span>
-                </div>
-                <div class="toggle-container">
-                    <div class="toggle active" id="autoRefreshToggle"></div>
-                </div>
-                <button onclick="refresh()">Refresh</button>
-                <button class="danger" onclick="clearQueries()">Clear All</button>
+            </div>
+            <div class="header-controls">
+                <div class="live-dot" id="liveDot" title="Auto-refresh active"></div>
+                <button class="btn" onclick="toggleAutoRefresh()" id="pauseBtn">Pause</button>
+                <button class="btn btn-danger" onclick="clearQueries()">Clear</button>
             </div>
         </header>
 
-        <div class="stats-bar" id="statsBar">
-            <div class="stat">
-                <span class="stat-label">Total Queries</span>
-                <span class="stat-value" id="statTotal">0</span>
+        <div class="nav-tabs" id="navTabs">
+            <div class="nav-tab active" data-panel="queries">Queries</div>
+            <div class="nav-tab" data-panel="endpoints">Endpoints</div>
+            <div class="nav-tab" data-panel="cost">Cost Analysis</div>
+        </div>
+
+        <!-- Queries Panel -->
+        <div class="panel active" id="panel-queries">
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-value" id="statTotal">0</span>
+                    <span class="stat-label">Queries</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="statSlow">0</span>
+                    <span class="stat-label">Slow (>100ms)</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="statIssues">0</span>
+                    <span class="stat-label">Issues</span>
+                </div>
             </div>
-            <div class="stat">
-                <span class="stat-label">Errors</span>
-                <span class="stat-value error" id="statErrors">0</span>
+
+            <div class="tabs-row">
+                <div class="tabs" id="tabs">
+                    <div class="tab active" data-tab="all">All <span class="count" id="countAll">0</span></div>
+                    <div class="tab" data-tab="slow">Slow <span class="count" id="countSlow">0</span></div>
+                    <div class="tab" data-tab="issues">Issues <span class="count" id="countIssues">0</span></div>
+                </div>
+                <label class="group-toggle" id="groupToggle">
+                    <input type="checkbox" onchange="toggleGrouping()">
+                    <span>Expand split queries</span>
+                </label>
             </div>
-            <div class="stat">
-                <span class="stat-label">Avg Duration</span>
-                <span class="stat-value" id="statAvg">0 ms</span>
+
+            <div class="search-bar">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search queries..." oninput="renderQueries()">
             </div>
-            <div class="stat">
-                <span class="stat-label">Max Duration</span>
-                <span class="stat-value" id="statMax">0 ms</span>
+
+            <div class="query-list" id="queryList">
+                <div class="empty-state">
+                    <h3>No queries yet</h3>
+                    <p>Queries will appear here as they execute.</p>
+                </div>
             </div>
         </div>
 
-        <div class="filters">
-            <input type="text" id="filterPath" placeholder="Filter by path..." oninput="applyFilters()">
-            <input type="number" id="filterMinDuration" placeholder="Min duration (ms)" oninput="applyFilters()">
-            <label style="display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 14px;">
-                <input type="checkbox" id="filterErrors" onchange="applyFilters()">
-                Errors only
-            </label>
+        <!-- Endpoints Panel -->
+        <div class="panel" id="panel-endpoints">
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-value" id="statEndpoints">0</span>
+                    <span class="stat-label">Endpoints</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="statEndpointQueries">0</span>
+                    <span class="stat-label">Total Queries</span>
+                </div>
+            </div>
+
+            <div id="endpointList">
+                <div class="empty-state">
+                    <h3>No endpoints yet</h3>
+                    <p>Endpoint analysis will appear here as queries execute.</p>
+                </div>
+            </div>
         </div>
 
-        <div class="query-list" id="queryList">
-            <div class="empty-state">
-                <h3>No queries captured yet</h3>
-                <p>Queries will appear here as your application executes EF Core commands.</p>
+        <!-- Cost Analysis Panel -->
+        <div class="panel" id="panel-cost">
+            <div class="cost-summary" id="costSummary">
+                <div class="cost-card">
+                    <div class="cost-card-value" id="costTotalTime">-</div>
+                    <div class="cost-card-label">Total Query Time</div>
+                </div>
+                <div class="cost-card">
+                    <div class="cost-card-value has-savings" id="costPotentialSavings">-</div>
+                    <div class="cost-card-label">Potential Savings</div>
+                </div>
+                <div class="cost-card">
+                    <div class="cost-card-value" id="costRecommendations">-</div>
+                    <div class="cost-card-label">Recommendations</div>
+                </div>
+            </div>
+
+            <h3 style="margin-bottom: 16px; color: var(--text-secondary);">Prioritized Recommendations</h3>
+            <div class="recommendation-list" id="recommendationList">
+                <div class="empty-state">
+                    <h3>No recommendations</h3>
+                    <p>Cost analysis will appear here as queries execute.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Query Plan Modal -->
+    <div class="modal-overlay" id="planModal" onclick="closePlanModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <span class="modal-title">Query Plan Analysis</span>
+                <button class="modal-close" onclick="closePlanModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="planModalBody">
+                <div class="plan-loading">
+                    <div class="spinner"></div>
+                    Analyzing query plan...
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         let queries = [];
+        let endpoints = [];
+        let costReport = null;
         let autoRefresh = true;
         let refreshInterval;
+        let expandedId = null;
+        let currentTab = 'all';
+        let currentPanel = 'queries';
+        let groupSplits = true;
+        let expandedGroups = new Set();
 
         const basePath = window.location.pathname.replace(/\/$/, '');
+        const SLOW_THRESHOLD = 100;
+
+        // Navigation
+        document.getElementById('navTabs').addEventListener('click', (e) => {
+            const tab = e.target.closest('.nav-tab');
+            if (!tab) return;
+
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            currentPanel = tab.dataset.panel;
+            document.getElementById(`panel-${currentPanel}`).classList.add('active');
+
+            if (currentPanel === 'endpoints') fetchEndpoints();
+            if (currentPanel === 'cost') fetchCostReport();
+        });
+
+        // Tab switching
+        document.getElementById('tabs').addEventListener('click', (e) => {
+            const tab = e.target.closest('.tab');
+            if (!tab) return;
+
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            currentTab = tab.dataset.tab;
+            renderQueries();
+        });
 
         async function fetchQueries() {
             try {
                 const response = await fetch(`${basePath}/api/queries`);
                 const data = await response.json();
                 queries = data.queries || [];
+                updateStats();
                 renderQueries();
             } catch (error) {
                 console.error('Failed to fetch queries:', error);
             }
         }
 
-        async function fetchStats() {
+        async function fetchEndpoints() {
             try {
-                const response = await fetch(`${basePath}/api/stats`);
-                const stats = await response.json();
-                document.getElementById('statTotal').textContent = stats.totalQueries;
-                document.getElementById('statErrors').textContent = stats.errorCount;
-                document.getElementById('statAvg').textContent = stats.totalQueries > 0
-                    ? `${stats.averageDurationMs.toFixed(2)} ms`
-                    : '0 ms';
-                document.getElementById('statMax').textContent = stats.totalQueries > 0
-                    ? `${stats.maxDurationMs.toFixed(2)} ms`
-                    : '0 ms';
+                const response = await fetch(`${basePath}/api/endpoints`);
+                const data = await response.json();
+                endpoints = data.endpoints || [];
+                renderEndpoints();
             } catch (error) {
-                console.error('Failed to fetch stats:', error);
+                console.error('Failed to fetch endpoints:', error);
             }
         }
 
-        function renderQueries() {
-            const container = document.getElementById('queryList');
-            const filteredQueries = applyFiltersToQueries();
+        async function fetchCostReport() {
+            try {
+                const response = await fetch(`${basePath}/api/cost-report`);
+                costReport = await response.json();
+                renderCostReport();
+            } catch (error) {
+                console.error('Failed to fetch cost report:', error);
+            }
+        }
 
-            if (filteredQueries.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <h3>No queries captured yet</h3>
-                        <p>Queries will appear here as your application executes EF Core commands.</p>
-                    </div>
-                `;
+        function updateStats() {
+            const total = queries.length;
+            const slow = queries.filter(q => q.durationMs >= SLOW_THRESHOLD).length;
+            const issues = queries.filter(q => q.isN1 || q.isError).length;
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statSlow').textContent = slow;
+            document.getElementById('statSlow').className = slow > 0 ? 'stat-value has-issues' : 'stat-value';
+            document.getElementById('statIssues').textContent = issues;
+            document.getElementById('statIssues').className = issues > 0 ? 'stat-value has-issues' : 'stat-value';
+
+            document.getElementById('countAll').textContent = total;
+            document.getElementById('countSlow').textContent = slow;
+            document.getElementById('countIssues').textContent = issues;
+
+            const issuesTab = document.querySelector('[data-tab="issues"]');
+            const slowTab = document.querySelector('[data-tab="slow"]');
+            issuesTab.classList.toggle('has-issues', issues > 0);
+            slowTab.classList.toggle('has-issues', slow > 0);
+        }
+
+        function renderEndpoints() {
+            const container = document.getElementById('endpointList');
+            document.getElementById('statEndpoints').textContent = endpoints.length;
+            document.getElementById('statEndpointQueries').textContent = endpoints.reduce((sum, e) => sum + e.queryCount, 0);
+
+            if (endpoints.length === 0) {
+                container.innerHTML = `<div class="empty-state"><h3>No endpoints yet</h3><p>Endpoint analysis will appear here as queries execute.</p></div>`;
                 return;
             }
 
-            container.innerHTML = filteredQueries.map(q => `
-                <div class="query-item ${q.isError ? 'error' : ''}" data-id="${q.id}">
-                    <div class="query-header" onclick="toggleQuery('${q.id}')">
-                        <span class="query-sql-preview">${escapeHtml(q.sql.substring(0, 150))}${q.sql.length > 150 ? '...' : ''}</span>
-                        <div class="query-meta">
-                            ${q.requestPath ? `<span class="query-path">${escapeHtml(q.requestPath)}</span>` : ''}
-                            <span class="query-duration ${getDurationClass(q.durationMs)}">${q.durationMs.toFixed(2)} ms</span>
-                            <span class="query-time">${formatTime(q.timestamp)}</span>
+            container.innerHTML = endpoints.map(e => {
+                const total = e.totalDurationMs || 1;
+                const n1Pct = (e.n1DurationMs / total) * 100;
+                const slowPct = (e.slowDurationMs / total) * 100;
+                const normalPct = 100 - n1Pct - slowPct;
+
+                return `
+                    <div class="endpoint-item">
+                        <div class="endpoint-header">
+                            <span class="endpoint-name">${escapeHtml(e.endpoint)}</span>
+                            <span class="endpoint-duration">${formatDuration(e.totalDurationMs)} total</span>
+                        </div>
+                        <div class="endpoint-bar">
+                            ${n1Pct > 0 ? `<div class="bar-segment bar-n1" style="width: ${n1Pct}%"></div>` : ''}
+                            ${slowPct > 0 ? `<div class="bar-segment bar-slow" style="width: ${slowPct}%"></div>` : ''}
+                            ${normalPct > 0 ? `<div class="bar-segment bar-normal" style="width: ${normalPct}%"></div>` : ''}
+                        </div>
+                        <div class="endpoint-legend">
+                            <span class="legend-item"><span class="legend-dot bar-n1"></span> N+1: ${e.n1QueryCount} queries (${n1Pct.toFixed(0)}%)</span>
+                            <span class="legend-item"><span class="legend-dot bar-slow"></span> Slow: ${e.slowQueryCount} queries</span>
+                            <span class="legend-item"><span class="legend-dot bar-normal"></span> Normal</span>
                         </div>
                     </div>
-                    <div class="query-details">
-                        <div class="query-sql">${formatSql(q.sql)}</div>
-                        ${Object.keys(q.parameters || {}).length > 0 ? `
-                            <div class="query-params">
-                                <h4>Parameters</h4>
-                                <div class="params-list">
-                                    ${Object.entries(q.parameters).map(([name, value]) => `
-                                        <span class="param">
-                                            <span class="param-name">${escapeHtml(name)}</span> =
-                                            <span class="param-value">${formatParamValue(value)}</span>
-                                        </span>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        ` : ''}
-                        ${q.isError ? `<div class="error-message">${escapeHtml(q.errorMessage || 'Unknown error')}</div>` : ''}
-                        <button class="copy-btn" onclick="copyToClipboard('${q.id}')">Copy SQL</button>
+                `;
+            }).join('');
+        }
+
+        function renderCostReport() {
+            if (!costReport) return;
+
+            document.getElementById('costTotalTime').textContent = formatDuration(costReport.totalQueryTimeMs);
+            document.getElementById('costPotentialSavings').textContent = `${costReport.potentialSavingsPercent.toFixed(1)}%`;
+            document.getElementById('costRecommendations').textContent = costReport.recommendationCount;
+
+            const container = document.getElementById('recommendationList');
+            if (!costReport.recommendations || costReport.recommendations.length === 0) {
+                container.innerHTML = `<div class="empty-state"><h3>No recommendations</h3><p>No performance issues detected.</p></div>`;
+                return;
+            }
+
+            container.innerHTML = costReport.recommendations.map(r => `
+                <div class="recommendation-item ${r.severity.toLowerCase()}">
+                    <div class="recommendation-header">
+                        <span class="recommendation-type">
+                            <span class="tag tag-${r.severity.toLowerCase()}">${r.severity}</span>
+                            ${r.issueType}
+                        </span>
+                        <span class="recommendation-savings">Saves ${r.timeSavedPerMinFormatted}</span>
                     </div>
+                    <div class="recommendation-sql">${escapeHtml(r.normalizedSql)}</div>
+                    <div class="recommendation-meta">
+                        <span>${r.executionCount} executions</span>
+                        <span>Avg: ${formatDuration(r.avgDurationMs)}</span>
+                        <span>Est. savings: ${r.estimatedSavingsPercent.toFixed(0)}%</span>
+                        ${r.requestPath ? `<span>${escapeHtml(r.requestPath)}</span>` : ''}
+                    </div>
+                    ${r.suggestedFix ? `<div class="suggestion-fix" style="margin-top: 12px">${escapeHtml(r.suggestedFix)}</div>` : ''}
                 </div>
             `).join('');
         }
 
-        function applyFiltersToQueries() {
-            const pathFilter = document.getElementById('filterPath').value.toLowerCase();
-            const minDuration = parseFloat(document.getElementById('filterMinDuration').value) || 0;
-            const errorsOnly = document.getElementById('filterErrors').checked;
+        function getFilteredQueries() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            let filtered = queries;
 
-            return queries.filter(q => {
-                if (pathFilter && (!q.requestPath || !q.requestPath.toLowerCase().includes(pathFilter))) {
-                    return false;
-                }
-                if (minDuration > 0 && q.durationMs < minDuration) {
-                    return false;
-                }
-                if (errorsOnly && !q.isError) {
-                    return false;
-                }
-                return true;
-            });
+            if (currentTab === 'slow') {
+                filtered = filtered.filter(q => q.durationMs >= SLOW_THRESHOLD);
+            } else if (currentTab === 'issues') {
+                filtered = filtered.filter(q => q.isN1 || q.isError);
+            }
+
+            if (search) {
+                filtered = filtered.filter(q =>
+                    q.sql.toLowerCase().includes(search) ||
+                    (q.requestPath && q.requestPath.toLowerCase().includes(search))
+                );
+            }
+
+            return filtered;
         }
 
-        function applyFilters() {
+        function renderQueries() {
+            const container = document.getElementById('queryList');
+            const filtered = getFilteredQueries();
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="empty-state"><h3>No queries</h3><p>${currentTab === 'all' ? 'Queries will appear here as they execute.' : 'No matching queries found.'}</p></div>`;
+                return;
+            }
+
+            if (groupSplits) {
+                container.innerHTML = renderGroupedQueries(filtered);
+            } else {
+                container.innerHTML = filtered.map(q => renderQueryRow(q)).join('');
+            }
+        }
+
+        function renderGroupedQueries(filtered) {
+            const splitGroups = new Map();
+            const otherQueries = [];
+
+            for (const q of filtered) {
+                if (q.isSplit && q.splitGroupId !== null) {
+                    const key = `split-${q.splitGroupId}`;
+                    if (!splitGroups.has(key)) {
+                        splitGroups.set(key, { id: key, queries: [], tables: q.splitTables || [], totalMs: 0 });
+                    }
+                    const group = splitGroups.get(key);
+                    group.queries.push(q);
+                    group.totalMs += q.durationMs;
+                } else {
+                    otherQueries.push(q);
+                }
+            }
+
+            splitGroupsCache = splitGroups;
+            let html = '';
+
+            for (const [groupId, group] of splitGroups) {
+                const firstQuery = group.queries[0];
+
+                // Add a group header
+                html += `
+                    <div class="split-group-header">
+                        <span class="tag tag-split">Split Query</span>
+                        <span>${group.tables.join(' → ')}</span>
+                        <span class="split-group-total">${formatDuration(group.totalMs)} total</span>
+                    </div>
+                `;
+
+                // Render each query in the group using the standard row format
+                html += group.queries.map(q => renderQueryRow(q)).join('');
+            }
+
+            html += otherQueries.map(q => renderQueryRow(q)).join('');
+            return html;
+        }
+
+        function renderQueryRow(q) {
+            const isExpanded = expandedId === q.id;
+            const rowClasses = ['query-row'];
+            if (isExpanded) rowClasses.push('expanded');
+            if (q.isN1 || q.isError) rowClasses.push('has-issue');
+            if (q.durationMs >= SLOW_THRESHOLD) rowClasses.push('has-slow');
+
+            return `
+                <div class="${rowClasses.join(' ')}" onclick="toggleExpand('${q.id}')">
+                    <div class="duration ${getDurationClass(q.durationMs)}">${formatDuration(q.durationMs)}</div>
+                    <div class="sql-preview">${escapeHtml(q.sql)}</div>
+                    <div class="tags">
+                        ${q.callSite ? `<span class="call-site">${escapeHtml(q.callSite)}</span>` : ''}
+                        ${q.durationMs >= 1000 ? '<span class="tag tag-slow">Slow</span>' : ''}
+                        ${q.isN1 ? '<span class="tag tag-n1">N+1</span>' : ''}
+                        ${q.isSplit && !groupSplits ? '<span class="tag tag-split">Split</span>' : ''}
+                        ${q.isError ? '<span class="tag tag-error">Error</span>' : ''}
+                        ${hasSuggestions(q) ? '<span class="tag tag-hint">tips</span>' : ''}
+                        <span class="time">${formatTime(q.timestamp)}</span>
+                    </div>
+                </div>
+                <div class="query-details">
+                    ${q.stackTrace?.length ? `
+                        <div class="detail-section">
+                            <div class="detail-label">Called From</div>
+                            <div class="stack-trace">${q.stackTrace.map(f => `<div class="stack-frame">${escapeHtml(f)}</div>`).join('')}</div>
+                        </div>
+                    ` : ''}
+                    <div class="sql-full">${formatSql(q.sql)}</div>
+                    ${q.requestPath ? `<div class="detail-section"><div class="detail-label">Request</div><div>${escapeHtml(q.requestPath)}</div></div>` : ''}
+                    ${Object.keys(q.parameters || {}).length > 0 ? `
+                        <div class="detail-section">
+                            <div class="detail-label">Parameters</div>
+                            <div class="detail-row">${Object.entries(q.parameters).map(([k, v]) => `<span class="param-chip"><span class="param-name">${escapeHtml(k)}</span> = <span class="param-value">${formatValue(v)}</span></span>`).join('')}</div>
+                        </div>
+                    ` : ''}
+                    ${q.isError ? `<div class="detail-section"><div class="detail-label">Error</div><div style="color: var(--error)">${escapeHtml(q.errorMessage || 'Unknown error')}</div></div>` : ''}
+                    ${q.suggestions?.length ? `
+                        <div class="detail-section">
+                            <div class="detail-label">Suggestions</div>
+                            <div class="suggestions">${q.suggestions.map(s => `
+                                <div class="suggestion ${s.severity.toLowerCase()}">
+                                    <div class="suggestion-header">
+                                        <span class="suggestion-icon">${getSuggestionIcon(s.type)}</span>
+                                        <span class="suggestion-title">${escapeHtml(s.title)}</span>
+                                        <span class="suggestion-badge ${s.severity.toLowerCase()}">${s.severity}</span>
+                                    </div>
+                                    <div class="suggestion-message">${escapeHtml(s.message)}</div>
+                                    ${s.suggestedFix ? `<div class="suggestion-fix">${escapeHtml(s.suggestedFix)}</div>` : ''}
+                                </div>
+                            `).join('')}</div>
+                        </div>
+                    ` : ''}
+                    <div class="btn-row">
+                        <button class="btn copy-btn" onclick="event.stopPropagation(); copySQL('${q.id}')">Copy SQL</button>
+                        <button class="btn btn-primary" onclick="event.stopPropagation(); analyzePlan('${q.id}')">Analyze Plan</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleExpand(id) {
+            expandedId = expandedId === id ? null : id;
             renderQueries();
         }
 
-        function toggleQuery(id) {
-            const item = document.querySelector(`[data-id="${id}"]`);
-            if (item) {
-                item.classList.toggle('expanded');
-            }
+        function toggleGrouping() {
+            groupSplits = !document.querySelector('#groupToggle input').checked;
+            renderQueries();
+        }
+
+        function toggleSplitGroup(groupId) {
+            if (expandedGroups.has(groupId)) expandedGroups.delete(groupId);
+            else expandedGroups.add(groupId);
+            renderQueries();
         }
 
         function getDurationClass(ms) {
             if (ms >= 1000) return 'very-slow';
             if (ms >= 100) return 'slow';
-            return '';
+            if (ms >= 10) return 'medium';
+            return 'fast';
+        }
+
+        function formatDuration(ms) {
+            if (ms >= 1000) return (ms / 1000).toFixed(1) + 's';
+            return ms.toFixed(0) + 'ms';
         }
 
         function formatTime(timestamp) {
-            const date = new Date(timestamp);
-            return date.toLocaleTimeString();
+            return new Date(timestamp).toLocaleTimeString();
         }
 
         function formatSql(sql) {
-            // Basic SQL formatting - highlight keywords
-            const keywords = ['SELECT', 'FROM', 'WHERE', 'JOIN', 'LEFT', 'RIGHT', 'INNER', 'OUTER',
-                           'ON', 'AND', 'OR', 'ORDER', 'BY', 'GROUP', 'HAVING', 'INSERT', 'UPDATE',
-                           'DELETE', 'SET', 'VALUES', 'INTO', 'CREATE', 'ALTER', 'DROP', 'TABLE',
-                           'INDEX', 'AS', 'DISTINCT', 'TOP', 'LIMIT', 'OFFSET', 'UNION', 'ALL',
-                           'NOT', 'NULL', 'IS', 'IN', 'LIKE', 'BETWEEN', 'EXISTS', 'CASE', 'WHEN',
-                           'THEN', 'ELSE', 'END', 'ASC', 'DESC'];
-
-            let formatted = escapeHtml(sql);
+            const keywords = ['SELECT', 'FROM', 'WHERE', 'JOIN', 'LEFT', 'RIGHT', 'INNER', 'OUTER', 'ON', 'AND', 'OR', 'ORDER', 'BY', 'GROUP', 'HAVING', 'INSERT', 'UPDATE', 'DELETE', 'SET', 'VALUES', 'INTO', 'AS', 'DISTINCT', 'LIMIT', 'OFFSET', 'NOT', 'NULL', 'IS', 'IN', 'LIKE', 'BETWEEN', 'EXISTS', 'CASE', 'WHEN', 'THEN', 'ELSE', 'END', 'ASC', 'DESC', 'INCLUDE'];
+            let html = escapeHtml(sql);
             keywords.forEach(kw => {
-                const regex = new RegExp(`\\b${kw}\\b`, 'gi');
-                formatted = formatted.replace(regex, `<span style="color: var(--accent); font-weight: 600;">${kw}</span>`);
+                html = html.replace(new RegExp(`\\b${kw}\\b`, 'gi'), `<span class="sql-keyword">${kw}</span>`);
             });
-            return formatted;
+            return html;
         }
 
-        function formatParamValue(value) {
-            if (value === null) return 'NULL';
-            if (typeof value === 'string') return `'${escapeHtml(value)}'`;
-            return String(value);
+        function formatValue(v) {
+            if (v === null) return 'NULL';
+            if (typeof v === 'string') return `'${escapeHtml(v)}'`;
+            return String(v);
+        }
+
+        function getSuggestionIcon(type) {
+            const icons = { MissingIndex: 'idx', MissingPagination: 'pg', SelectAll: '*', NoTracking: 'nt', CartesianExplosion: 'x' };
+            return icons[type] || 'tip';
+        }
+
+        function hasSuggestions(q) { return q.suggestions && q.suggestions.length > 0; }
+
+        let splitGroupsCache = new Map();
+
+        function mergeParameters(queries) {
+            const merged = {};
+            for (const q of queries) if (q.parameters) Object.assign(merged, q.parameters);
+            return merged;
+        }
+
+        function copySplitSQL(groupId) {
+            const group = splitGroupsCache.get(groupId);
+            if (group) navigator.clipboard.writeText(group.queries.map(q => q.sql).join('\n\n-- Next query --\n\n'));
+        }
+
+        function aggregateSuggestions(queries) {
+            const seen = new Set();
+            const aggregated = [];
+            for (const q of queries) {
+                if (!q.suggestions) continue;
+                for (const s of q.suggestions) {
+                    if (s.type === 'NoTracking') continue;
+                    const key = `${s.type}:${s.title}:${s.column || ''}`;
+                    if (!seen.has(key)) { seen.add(key); aggregated.push(s); }
+                }
+            }
+            return aggregated;
         }
 
         function escapeHtml(text) {
@@ -601,59 +1545,242 @@
             return div.innerHTML;
         }
 
-        async function copyToClipboard(id) {
-            const query = queries.find(q => q.id === id);
-            if (query) {
-                await navigator.clipboard.writeText(query.sql);
-            }
+        function copySQL(id) {
+            const q = queries.find(q => q.id === id);
+            if (q) navigator.clipboard.writeText(q.sql);
         }
 
         async function clearQueries() {
-            if (!confirm('Are you sure you want to clear all captured queries?')) {
-                return;
-            }
-            try {
-                await fetch(`${basePath}/api/queries`, { method: 'DELETE' });
-                await refresh();
-            } catch (error) {
-                console.error('Failed to clear queries:', error);
-            }
-        }
-
-        async function refresh() {
-            await Promise.all([fetchQueries(), fetchStats()]);
+            if (!confirm('Clear all queries?')) return;
+            await fetch(`${basePath}/api/queries`, { method: 'DELETE' });
+            await fetchQueries();
         }
 
         function toggleAutoRefresh() {
             autoRefresh = !autoRefresh;
-            const toggle = document.getElementById('autoRefreshToggle');
-            const indicator = document.getElementById('liveIndicator');
+            const dot = document.getElementById('liveDot');
+            const btn = document.getElementById('pauseBtn');
 
             if (autoRefresh) {
-                toggle.classList.add('active');
-                indicator.classList.add('active');
+                dot.classList.remove('paused');
+                btn.textContent = 'Pause';
                 startAutoRefresh();
             } else {
-                toggle.classList.remove('active');
-                indicator.classList.remove('active');
+                dot.classList.add('paused');
+                btn.textContent = 'Resume';
                 stopAutoRefresh();
             }
         }
 
         function startAutoRefresh() {
-            refreshInterval = setInterval(refresh, 2000);
+            refreshInterval = setInterval(() => {
+                fetchQueries();
+                if (currentPanel === 'endpoints') fetchEndpoints();
+                if (currentPanel === 'cost') fetchCostReport();
+            }, 2000);
         }
 
         function stopAutoRefresh() {
-            if (refreshInterval) {
-                clearInterval(refreshInterval);
+            clearInterval(refreshInterval);
+        }
+
+        // Query Plan Viewer
+        let currentPlanQueryId = null;
+
+        async function analyzePlan(queryId) {
+            currentPlanQueryId = queryId;
+            const modal = document.getElementById('planModal');
+            const body = document.getElementById('planModalBody');
+
+            modal.classList.add('active');
+            body.innerHTML = `
+                <div class="plan-loading">
+                    <div class="spinner"></div>
+                    Analyzing query plan...
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`${basePath}/api/queries/${queryId}/plan`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    body.innerHTML = `
+                        <div class="plan-error">
+                            <strong>Unable to analyze plan</strong><br>
+                            ${escapeHtml(data.error || 'Unknown error')}
+                        </div>
+                    `;
+                    return;
+                }
+
+                renderPlanResult(data);
+            } catch (error) {
+                body.innerHTML = `
+                    <div class="plan-error">
+                        <strong>Failed to fetch plan</strong><br>
+                        ${escapeHtml(error.message)}
+                    </div>
+                `;
             }
         }
 
-        // Initialize
-        document.getElementById('autoRefreshToggle').addEventListener('click', toggleAutoRefresh);
-        document.getElementById('liveIndicator').classList.add('active');
-        refresh();
+        function renderPlanResult(plan) {
+            const body = document.getElementById('planModalBody');
+
+            // Check if the plan analysis failed
+            if (!plan.isSuccess) {
+                body.innerHTML = `
+                    <div class="plan-error">
+                        <strong>Plan Analysis Failed</strong><br>
+                        ${escapeHtml(plan.errorMessage || 'Unknown error occurred during plan analysis')}
+                    </div>
+                    ${plan.rawPlan ? `
+                        <div class="plan-raw-toggle" style="margin-top: 16px;">
+                            <button class="btn" onclick="toggleRawPlan()">Show Raw Output</button>
+                        </div>
+                        <div class="plan-raw" id="planRaw">${escapeHtml(plan.rawPlan)}</div>
+                    ` : ''}
+                `;
+                return;
+            }
+
+            const issuesHtml = plan.issues && plan.issues.length > 0 ? `
+                <div class="plan-issues">
+                    <div class="plan-issues-header">
+                        <span>&#9888;</span> Issues Found (${plan.issues.length})
+                    </div>
+                    ${plan.issues.map(issue => `
+                        <div class="plan-issue ${issue.severity.toLowerCase()}">
+                            <div class="plan-issue-header">
+                                <span class="tag tag-${issue.severity.toLowerCase()}">${issue.severity}</span>
+                                <span class="plan-issue-title">${escapeHtml(issue.title)}</span>
+                            </div>
+                            <div class="plan-issue-message">${escapeHtml(issue.message)}</div>
+                            ${issue.suggestedFix ? `<div class="plan-issue-fix">${escapeHtml(issue.suggestedFix)}</div>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '';
+
+            const statsHtml = `
+                <div class="plan-stats">
+                    ${plan.estimatedCost ? `
+                        <div class="plan-stat">
+                            <span class="plan-stat-value">${plan.estimatedCost.toFixed(2)}</span>
+                            <span class="plan-stat-label">Est. Cost</span>
+                        </div>
+                    ` : ''}
+                    ${plan.estimatedRows ? `
+                        <div class="plan-stat">
+                            <span class="plan-stat-value">${plan.estimatedRows.toLocaleString()}</span>
+                            <span class="plan-stat-label">Est. Rows</span>
+                        </div>
+                    ` : ''}
+                    ${plan.actualTimeMs ? `
+                        <div class="plan-stat">
+                            <span class="plan-stat-value">${plan.actualTimeMs.toFixed(2)}ms</span>
+                            <span class="plan-stat-label">Actual Time</span>
+                        </div>
+                    ` : ''}
+                    <div class="plan-stat">
+                        <span class="plan-stat-value">${plan.provider || 'Unknown'}</span>
+                        <span class="plan-stat-label">Provider</span>
+                    </div>
+                </div>
+            `;
+
+            const treeHtml = plan.nodes && plan.nodes.length > 0 ? `
+                <div class="plan-tree-section">
+                    <div class="plan-tree-header">Execution Plan</div>
+                    <div class="plan-tree">
+                        ${plan.nodes.map(node => renderPlanNode(node, 0)).join('')}
+                    </div>
+                </div>
+            ` : `<div class="empty-state"><p>No execution plan nodes parsed. ${plan.rawPlan ? 'Check the raw plan below for details.' : 'The query may not have generated a plan.'}</p></div>`;
+
+            const rawHtml = plan.rawPlan ? `
+                <div class="plan-raw-toggle">
+                    <button class="btn" onclick="toggleRawPlan()">Show Raw Plan</button>
+                </div>
+                <div class="plan-raw" id="planRaw">${escapeHtml(plan.rawPlan)}</div>
+            ` : '';
+
+            body.innerHTML = issuesHtml + statsHtml + treeHtml + rawHtml;
+        }
+
+        function renderPlanNode(node, depth) {
+            const iconClass = getNodeIconClass(node);
+            const opClass = node.isTableScan ? 'warning' : '';
+
+            const costInfo = [];
+            if (node.estimatedCost) costInfo.push(`cost: ${node.estimatedCost.toFixed(2)}`);
+            if (node.estimatedRows) costInfo.push(`rows: ${node.estimatedRows}`);
+            if (node.actualTimeMs) costInfo.push(`time: ${node.actualTimeMs.toFixed(2)}ms`);
+
+            const childrenHtml = node.children && node.children.length > 0
+                ? `<div class="plan-node-children">${node.children.map(child => renderPlanNode(child, depth + 1)).join('')}</div>`
+                : '';
+
+            return `
+                <div class="plan-node">
+                    <div class="plan-node-content">
+                        <span class="plan-node-icon ${iconClass}">${getNodeIcon(node)}</span>
+                        <span class="plan-node-op ${opClass}">${escapeHtml(node.operation || 'Unknown')}</span>
+                        ${node.objectName ? `<span class="plan-node-object">${escapeHtml(node.objectName)}</span>` : ''}
+                        ${node.indexName ? `<span class="plan-node-details">using ${escapeHtml(node.indexName)}</span>` : ''}
+                        ${costInfo.length > 0 ? `<span class="plan-node-cost">(${costInfo.join(', ')})</span>` : ''}
+                    </div>
+                    ${node.details ? `<div class="plan-node-details" style="margin-left: 26px; margin-bottom: 4px;">${escapeHtml(node.details)}</div>` : ''}
+                    ${childrenHtml}
+                </div>
+            `;
+        }
+
+        function getNodeIconClass(node) {
+            const op = (node.operation || '').toLowerCase();
+            if (node.isTableScan || op.includes('seq scan') || op.includes('table scan') || op.includes('clustered index scan')) return 'table-scan';
+            if (op.includes('index seek') || op.includes('index only')) return 'index-seek';
+            if (op.includes('index scan') || node.usesIndex) return 'index-scan';
+            if (op.includes('sort')) return 'sort';
+            if (op.includes('filter') || op.includes('where')) return 'filter';
+            if (op.includes('join') || op.includes('loop') || op.includes('merge') || op.includes('hash')) return 'join';
+            return 'other';
+        }
+
+        function getNodeIcon(node) {
+            const op = (node.operation || '').toLowerCase();
+            if (node.isTableScan || op.includes('seq scan') || op.includes('table scan')) return 'T';
+            if (op.includes('index seek')) return 'S';
+            if (op.includes('index scan') || node.usesIndex) return 'I';
+            if (op.includes('sort')) return 'O';
+            if (op.includes('filter')) return 'F';
+            if (op.includes('join') || op.includes('loop')) return 'J';
+            if (op.includes('hash')) return 'H';
+            if (op.includes('merge')) return 'M';
+            return '?';
+        }
+
+        function toggleRawPlan() {
+            const raw = document.getElementById('planRaw');
+            raw.classList.toggle('visible');
+            const btn = document.querySelector('.plan-raw-toggle button');
+            btn.textContent = raw.classList.contains('visible') ? 'Hide Raw Plan' : 'Show Raw Plan';
+        }
+
+        function closePlanModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('planModal').classList.remove('active');
+            currentPlanQueryId = null;
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closePlanModal();
+        });
+
+        // Init
+        fetchQueries();
         startAutoRefresh();
     </script>
 </body>

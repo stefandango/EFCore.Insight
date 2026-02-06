@@ -1,4 +1,7 @@
+using EFCore.Insight.Cost;
+using EFCore.Insight.History;
 using EFCore.Insight.QueryCapture;
+using EFCore.Insight.QueryPlan;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -29,6 +32,20 @@ public static class ServiceCollectionExtensions
         services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
         services.AddSingleton<EFDiagnosticListener>();
+        services.AddSingleton(new QueryPlanService(options));
+        services.AddSingleton<CostCalculator>();
+
+        // Register history store
+        if (options.EnableQueryHistory)
+        {
+            services.AddSingleton<IQueryHistoryStore>(
+                new FileQueryHistoryStore(options.HistoryStoragePath));
+        }
+        else
+        {
+            // Use in-memory store when history is disabled (for endpoint analysis)
+            services.AddSingleton<IQueryHistoryStore, InMemoryQueryHistoryStore>();
+        }
 
         return services;
     }

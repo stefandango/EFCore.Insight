@@ -1,6 +1,9 @@
 using System.Reflection;
 using EFCore.Insight.Api;
+using EFCore.Insight.Cost;
+using EFCore.Insight.History;
 using EFCore.Insight.QueryCapture;
+using EFCore.Insight.QueryPlan;
 using Microsoft.AspNetCore.Http;
 
 namespace EFCore.Insight.Dashboard;
@@ -13,13 +16,19 @@ internal sealed class DashboardMiddleware
     private readonly RequestDelegate _next;
     private readonly InsightOptions _options;
     private readonly QueryStore _store;
+    private readonly QueryPlanService _planService;
+    private readonly IQueryHistoryStore? _historyStore;
+    private readonly CostCalculator _costCalculator;
     private readonly string? _dashboardHtml;
 
-    public DashboardMiddleware(RequestDelegate next, InsightOptions options, QueryStore store)
+    public DashboardMiddleware(RequestDelegate next, InsightOptions options, QueryStore store, QueryPlanService planService, CostCalculator costCalculator, IQueryHistoryStore? historyStore = null)
     {
         _next = next;
         _options = options;
         _store = store;
+        _planService = planService;
+        _costCalculator = costCalculator;
+        _historyStore = historyStore;
         _dashboardHtml = LoadEmbeddedResource("Dashboard.assets.index.html");
     }
 
@@ -41,7 +50,7 @@ internal sealed class DashboardMiddleware
         if (subPath.StartsWith("api/", StringComparison.OrdinalIgnoreCase))
         {
             var apiPath = subPath["api/".Length..];
-            await InsightApiEndpoints.HandleApiRequest(context, _store, apiPath);
+            await InsightApiEndpoints.HandleApiRequest(context, _store, _planService, _options, apiPath, _historyStore, _costCalculator);
             return;
         }
 
