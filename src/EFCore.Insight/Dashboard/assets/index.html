@@ -1023,6 +1023,40 @@
             gap: 8px;
             margin-top: 12px;
         }
+
+        /* Connection Info */
+        .connection-info {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .connection-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 4px 12px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .connection-chip-provider {
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .connection-chip-dot {
+            color: var(--text-muted);
+        }
+
+        .connection-chip-db {
+            font-family: 'SF Mono', monospace;
+            font-size: 11px;
+        }
     </style>
 </head>
 <body>
@@ -1035,6 +1069,7 @@
                 </svg>
                 EFCore.<span>Insight</span>
             </div>
+            <div class="connection-info" id="connectionInfo"></div>
             <div class="header-controls">
                 <div class="live-dot" id="liveDot" title="Auto-refresh active"></div>
                 <button class="btn" onclick="toggleAutoRefresh()" id="pauseBtn">Pause</button>
@@ -1197,14 +1232,33 @@
 
         async function fetchQueries() {
             try {
-                const response = await fetch(`${basePath}/api/queries`);
-                const data = await response.json();
+                const [queriesResponse, statsResponse] = await Promise.all([
+                    fetch(`${basePath}/api/queries`),
+                    fetch(`${basePath}/api/stats`)
+                ]);
+                const data = await queriesResponse.json();
+                const statsData = await statsResponse.json();
                 queries = data.queries || [];
                 updateStats();
+                renderConnectionInfo(statsData.connections || []);
                 renderQueries();
             } catch (error) {
                 console.error('Failed to fetch queries:', error);
             }
+        }
+
+        function renderConnectionInfo(connections) {
+            const container = document.getElementById('connectionInfo');
+            if (!connections || connections.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            container.innerHTML = connections.map(c => {
+                const dbPart = c.database
+                    ? `<span class="connection-chip-dot">&middot;</span><span class="connection-chip-db">${escapeHtml(c.database)}</span>`
+                    : '';
+                return `<span class="connection-chip"><span class="connection-chip-provider">${escapeHtml(c.provider)}</span>${dbPart}</span>`;
+            }).join('');
         }
 
         async function fetchEndpoints() {

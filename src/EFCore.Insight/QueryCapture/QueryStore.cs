@@ -93,6 +93,20 @@ public sealed partial class QueryStore
         var n1Patterns = DetectN1Patterns(queries);
         var splitQueryGroups = DetectSplitQueries(queries);
 
+        var connections = queries
+            .Where(q => q.ProviderName is not null)
+            .GroupBy(q => (
+                Provider: ConnectionStringHelper.GetFriendlyProviderName(q.ProviderName),
+                Database: ConnectionStringHelper.SanitizeDatabaseId(q.ConnectionString, q.ProviderName)
+            ))
+            .Select(g => new ConnectionInfo
+            {
+                Provider = g.Key.Provider,
+                Database = g.Key.Database,
+                QueryCount = g.Count()
+            })
+            .ToList();
+
         return new QueryStats
         {
             TotalQueries = queries.Length,
@@ -106,7 +120,8 @@ public sealed partial class QueryStore
                 .GroupBy(q => q.RequestId)
                 .ToDictionary(g => g.Key!, g => g.Count()),
             N1Patterns = n1Patterns,
-            SplitQueryGroups = splitQueryGroups
+            SplitQueryGroups = splitQueryGroups,
+            Connections = connections
         };
     }
 
@@ -283,6 +298,7 @@ public sealed record QueryStats
     public IReadOnlyDictionary<string, int> QueriesPerRequest { get; init; } = new Dictionary<string, int>();
     public IReadOnlyList<N1Pattern> N1Patterns { get; init; } = [];
     public IReadOnlyList<SplitQueryGroup> SplitQueryGroups { get; init; } = [];
+    public IReadOnlyList<ConnectionInfo> Connections { get; init; } = [];
 }
 
 /// <summary>
@@ -362,4 +378,14 @@ public sealed record SplitQueryGroup
     /// Tables involved in the split query.
     /// </summary>
     public IReadOnlyList<string> Tables { get; init; } = [];
+}
+
+/// <summary>
+/// Represents a database connection used by captured queries.
+/// </summary>
+public sealed record ConnectionInfo
+{
+    public required string Provider { get; init; }
+    public string? Database { get; init; }
+    public int QueryCount { get; init; }
 }

@@ -290,7 +290,8 @@ internal static partial class InsightApiEndpoints
                 g.QueryIds,
                 g.TotalDurationMs,
                 g.Tables
-            })
+            }),
+            Connections = stats.Connections
         };
 
         await context.Response.WriteAsync(JsonSerializer.Serialize(response, JsonOptions));

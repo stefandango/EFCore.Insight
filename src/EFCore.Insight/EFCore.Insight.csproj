@@ -4,7 +4,14 @@
     <Description>Development-time EF Core query diagnostics with live SQL visibility and timing metrics</Description>
     <PackageTags>efcore;entityframework;diagnostics;sql;debugging;performance</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Version>0.1.0</Version>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="EFCore.Insight.Tests" />
+  </ItemGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -13,14 +20,15 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
-    <!-- Database providers for query plan analysis (optional, loaded dynamically) -->
-    <PackageReference Include="Microsoft.Data.Sqlite" />
-    <PackageReference Include="Microsoft.Data.SqlClient" />
-    <PackageReference Include="Npgsql" />
+    <!-- Database providers for query plan analysis (optional at runtime) -->
+    <PackageReference Include="Microsoft.Data.Sqlite" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Data.SqlClient" PrivateAssets="all" />
+    <PackageReference Include="Npgsql" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <None Include="../../LICENSE" Pack="true" PackagePath="/" />
   </ItemGroup>
 
   <ItemGroup>

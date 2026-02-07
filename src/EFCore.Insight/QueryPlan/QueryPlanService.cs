@@ -13,10 +13,22 @@ public sealed class QueryPlanService
         _options = options;
         _providers = new Dictionary<string, IQueryPlanProvider>(StringComparer.OrdinalIgnoreCase);
 
-        // Register built-in providers
-        RegisterProvider(new SqliteQueryPlanProvider());
-        RegisterProvider(new PostgresQueryPlanProvider());
-        RegisterProvider(new SqlServerQueryPlanProvider());
+        // Try to register built-in providers (assemblies may not be available at runtime)
+        TryRegisterProvider(() => new SqliteQueryPlanProvider());
+        TryRegisterProvider(() => new PostgresQueryPlanProvider());
+        TryRegisterProvider(() => new SqlServerQueryPlanProvider());
+    }
+
+    private void TryRegisterProvider(Func<IQueryPlanProvider> factory)
+    {
+        try
+        {
+            RegisterProvider(factory());
+        }
+        catch (Exception)
+        {
+            // Provider assembly not available — skip
+        }
     }
 
     /// <summary>

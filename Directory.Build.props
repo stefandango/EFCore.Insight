@@ -14,5 +14,8 @@
     <Product>EFCore.Insight</Product>
     <Copyright>Copyright (c) 2026</Copyright>
     <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/stefandango/EFCore.Insight</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/stefandango/EFCore.Insight</PackageProjectUrl>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 </Project>
